@@ -5,6 +5,7 @@ import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Environment;
 import android.santosh.com.filecodechallenge.R;
+import android.santosh.com.filecodechallenge.listerners.SDCardControllerListener;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -12,48 +13,81 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
-public class MainActivity extends BaseActivity implements View.OnClickListener {
+import java.util.Locale;
+
+public class MainActivity extends BaseActivity implements View.OnClickListener, SDCardControllerListener {
     private static String TAG = MainActivity.class.getSimpleName();
     private static int MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE = 100;
 
     private Button startButton;
     private Button stopButton;
     private View progressViewRoot;
-    private View loadingView;
+    private View detailsRootView;
+    private TextView averageFileSizeTextView;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
         bindViews();
+        toggleViews();
         addListeners();
     }
 
     private void bindViews() {
-        loadingView = findViewById(R.id.full_screen_loading_view);
-        //TODO: Remove this
-        loadingView.setVisibility(View.GONE);
 
         startButton = findViewById(R.id.start_button);
         stopButton = findViewById(R.id.stop_button);
 
         progressViewRoot = findViewById(R.id.progress_view_root_layout);
+
+        detailsRootView = findViewById(R.id.details_root_layout);
+        averageFileSizeTextView = findViewById(R.id.average_file_size_textview);
     }
 
-    private void toggleViews(){
-
+    private void toggleViews() {
+        if (appAPI.getSDCardController().isThreadActive()) {
+            startButton.setEnabled(false);
+            stopButton.setEnabled(true);
+            progressViewRoot.setVisibility(View.VISIBLE);
+            detailsRootView.setVisibility(View.GONE);
+        } else {
+            startButton.setEnabled(true);
+            stopButton.setEnabled(false);
+            progressViewRoot.setVisibility(View.GONE);
+            if (appAPI.getDatabaseController().getFileListRecordCount() > 0
+                    && appAPI.getDatabaseController().getFileExtensionListRecordCount() > 0) {
+                appAPI.getDatabaseController().getTotalFilesSize();
+                detailsRootView.setVisibility(View.VISIBLE);
+                setAverageTextView();
+            } else {
+                detailsRootView.setVisibility(View.GONE);
+            }
+        }
     }
 
     private void addListeners() {
         startButton.setOnClickListener(this);
         stopButton.setOnClickListener(this);
+        appAPI.getSDCardController().addSdCardControllerListener(this);
     }
 
     private void removeListeners() {
         startButton.setOnClickListener(null);
         stopButton.setOnClickListener(null);
+        appAPI.getSDCardController().removeSdCardControllerListener(this);
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+        Log.d(TAG,"onBackPressed");
+        if (appAPI.getSDCardController().isThreadActive()) {
+            appAPI.getSDCardController().stopDirectoryParsing();
+        }
     }
 
     @Override
@@ -81,7 +115,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
 
                 break;
             case R.id.stop_button:
-                Log.d(TAG,"stop button pressed.");
+                Log.d(TAG, "stop button pressed.");
                 appAPI.getSDCardController().stopDirectoryParsing();
                 break;
             default:
@@ -118,5 +152,53 @@ public class MainActivity extends BaseActivity implements View.OnClickListener {
 
         }
 
+    }
+
+    @Override
+    public void onParseStart() {
+        startButton.setEnabled(false);
+        stopButton.setEnabled(true);
+        progressViewRoot.setVisibility(View.VISIBLE);
+        detailsRootView.setVisibility(View.GONE);
+    }
+
+    @Override
+    public void onParseProgress() {
+
+    }
+
+    @Override
+    public void onParseStop() {
+        startButton.setEnabled(true);
+        stopButton.setEnabled(false);
+        progressViewRoot.setVisibility(View.GONE);
+        if (appAPI.getDatabaseController().getFileListRecordCount() > 0
+                && appAPI.getDatabaseController().getFileExtensionListRecordCount() > 0) {
+            detailsRootView.setVisibility(View.VISIBLE);
+            setAverageTextView();
+        } else {
+            detailsRootView.setVisibility(View.GONE);
+        }
+    }
+
+    @Override
+    public void onParseFinish() {
+        startButton.setEnabled(true);
+        stopButton.setEnabled(false);
+        progressViewRoot.setVisibility(View.GONE);
+        if (appAPI.getDatabaseController().getFileListRecordCount() > 0
+                && appAPI.getDatabaseController().getFileExtensionListRecordCount() > 0) {
+            detailsRootView.setVisibility(View.VISIBLE);
+            setAverageTextView();
+        } else {
+            detailsRootView.setVisibility(View.GONE);
+        }
+    }
+
+    private void setAverageTextView() {
+        long totalFileSize = appAPI.getDatabaseController().getTotalFilesSize();
+        long fileCount = appAPI.getDatabaseController().getFileListRecordCount();
+        double averageFileSize = (totalFileSize / fileCount) / (1024D * 1024D);
+        averageFileSizeTextView.setText(String.format(Locale.US, "%.2f MB", averageFileSize));
     }
 }

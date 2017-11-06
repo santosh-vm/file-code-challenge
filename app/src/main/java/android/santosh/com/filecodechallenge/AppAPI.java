@@ -1,5 +1,6 @@
 package android.santosh.com.filecodechallenge;
 
+import android.santosh.com.filecodechallenge.controllers.DatabaseController;
 import android.santosh.com.filecodechallenge.controllers.SDCardController;
 
 /**
@@ -8,12 +9,18 @@ import android.santosh.com.filecodechallenge.controllers.SDCardController;
 
 public class AppAPI {
     private SDCardController SDCardController;
+    private DatabaseController databaseController;
 
-    AppAPI(SDCardController SDCardController){
+    AppAPI(SDCardController SDCardController, DatabaseController databaseController){
         this.SDCardController = SDCardController;
+        this.databaseController = databaseController;
     }
 
     public SDCardController getSDCardController() {
         return SDCardController;
+    }
+
+    public DatabaseController getDatabaseController() {
+        return databaseController;
     }
 }

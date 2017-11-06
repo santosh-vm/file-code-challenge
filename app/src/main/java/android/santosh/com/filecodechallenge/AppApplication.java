@@ -2,6 +2,7 @@ package android.santosh.com.filecodechallenge;
 
 import android.app.Application;
 import android.os.Handler;
+import android.santosh.com.filecodechallenge.controllers.DatabaseController;
 import android.santosh.com.filecodechallenge.controllers.SDCardController;
 
 /**
@@ -16,8 +17,9 @@ public class AppApplication extends Application {
     @Override
     public void onCreate() {
         super.onCreate();
-        SDCardController SDCardController = new SDCardController(getApplicationContext(),new Handler());
-        appAPI = new AppAPI(SDCardController);
+        DatabaseController databaseController = new DatabaseController(getApplicationContext());
+        SDCardController SDCardController = new SDCardController(getApplicationContext(), new Handler(), databaseController);
+        appAPI = new AppAPI(SDCardController, databaseController);
     }
 
     public AppAPI getAppAPI() {

@@ -2,9 +2,14 @@ package android.santosh.com.filecodechallenge.controllers;
 
 import android.content.Context;
 import android.os.Handler;
+import android.santosh.com.filecodechallenge.listerners.SDCardControllerListener;
+import android.santosh.com.filecodechallenge.model.FileExtensionVO;
 import android.util.Log;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -15,16 +20,20 @@ import java.util.regex.Pattern;
 public class SDCardController {
     private static String TAG = SDCardController.class.getSimpleName();
     private static final double MEGABYTE = 1024D * 1024D;
-    private boolean isThreadActive = false;
+
 
     private Context context;
     private Handler handler;
     private Thread thread;
+    private boolean isThreadActive = false;
+    private List<SDCardControllerListener> sdCardControllerListeners = Collections.synchronizedList(new ArrayList<SDCardControllerListener>());
+    private DatabaseController databaseController;
 
-    public SDCardController(Context context, Handler handler) {
+    public SDCardController(Context context, Handler handler, DatabaseController databaseController) {
         Log.d(TAG, "SDCardController Initialized");
         this.context = context;
         this.handler = handler;
+        this.databaseController = databaseController;
     }
 
     public void beginDirectoryParsing(final File rootFolder) {
@@ -32,10 +41,14 @@ public class SDCardController {
             @Override
             public void run() {
                 try {
+                    notifyOnParseStart();
+                    databaseController.resetFileListTable();
+                    databaseController.resetFileExtensionListTable();
                     isThreadActive = true;
                     parseDirectory(rootFolder);
+                    notifyOnParseFinish();
                 } catch (InterruptedException e) {
-                    Log.e(TAG, "InterruptedException block: "+e.getMessage());
+                    Log.e(TAG, "InterruptedException block: " + e.getMessage());
                     Thread.currentThread().interrupt();
                 }
             }
@@ -45,6 +58,7 @@ public class SDCardController {
 
     public void stopDirectoryParsing() {
         isThreadActive = false;
+        notifyOnParseStop();
     }
 
     public boolean isThreadActive() {
@@ -69,11 +83,13 @@ public class SDCardController {
                         thread = null;
                         return;
                     }
-                    //Log.d(TAG, "listFile[i].getName(): " + listFile[i].getName());
                     //File name and File size in bytes.
                     double fileSizeinMB = listFile[i].length() / MEGABYTE;
-                    //Log.d(TAG, "listfile name:" + listFile[i].getName() + ", listFile[i].length(): " + listFile[i].length() + ", fileSizeinMB: " + String.format("%.4f", fileSizeinMB));
-                    //TODO: Save file name into file table
+                    Log.d(TAG, "listfile name:" + listFile[i].getName() + ", listFile[i].length(): " + listFile[i].length());
+                    //Log.d(TAG,"fileSizeinMB:: "+String.format("%.4f", fileSizeinMB));
+                    boolean isFileInsertSuccess = databaseController.saveFileDetails(listFile[i].getName(), listFile[i].length());
+                    Log.d(TAG,"isFileInsertSuccess: "+isFileInsertSuccess);
+
                     Pattern pattern = Pattern.compile("(.*)(\\.)(.*)");
                     Matcher matcher = pattern.matcher(listFile[i].getName());
                     if (matcher.matches() && matcher.groupCount() > 0) {
@@ -81,7 +97,17 @@ public class SDCardController {
                         for (int j = 1; j <= groupCount; j++) {
                             if (j == groupCount) {
                                 //Log.d(TAG, "group: " + i + ", text: " + matcher.group(j));
-                                //TODO: save to database the file extension type.
+                                String fileExtension = matcher.group(j).toLowerCase();
+                                int fileExtensionCount = 0;
+                                FileExtensionVO fileExtensionVO = databaseController.getFileExtensionVOByFileExtension(fileExtension);
+                                if(fileExtensionVO!=null){
+                                    fileExtensionCount = fileExtensionVO.getCount() + 1;
+                                }else{
+                                    fileExtensionCount  = 1;
+                                }
+                                Log.d(TAG,"Inserting fileExtension, fileExtension:"+fileExtension+", fileExtensionCount: "+fileExtensionCount);
+                                boolean isFileExtensionInsertSuccess = databaseController.saveFileExtensionDetails(fileExtension,fileExtensionCount);
+                                Log.d(TAG,"isFileExtensionInsertSuccess: "+isFileExtensionInsertSuccess);
                             }
                         }
                     }
@@ -89,7 +115,70 @@ public class SDCardController {
 
             }
         }
+    }
 
+    public void addSdCardControllerListener(SDCardControllerListener sdCardControllerListener) {
+        if (sdCardControllerListeners != null && !sdCardControllerListeners.contains(sdCardControllerListener)) {
+            sdCardControllerListeners.add(sdCardControllerListener);
+        }
+    }
+
+    public void removeSdCardControllerListener(SDCardControllerListener sdCardControllerListener) {
+        if (sdCardControllerListener != null && sdCardControllerListeners.contains(sdCardControllerListener)) {
+            sdCardControllerListeners.remove(sdCardControllerListener);
+        }
+    }
+
+    private void notifyOnParseStart() {
+        if (sdCardControllerListeners != null && sdCardControllerListeners.size() > 0) {
+            for (final SDCardControllerListener sdCardControllerListener : sdCardControllerListeners) {
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        sdCardControllerListener.onParseStart();
+                    }
+                });
+            }
+        }
+    }
+
+    private void notifyOnParseStop() {
+        if (sdCardControllerListeners != null && sdCardControllerListeners.size() > 0) {
+            for (final SDCardControllerListener sdCardControllerListener : sdCardControllerListeners) {
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        sdCardControllerListener.onParseStop();
+                    }
+                });
+            }
+        }
+    }
+
+    private void notifyOnParseProgress() {
+        if (sdCardControllerListeners != null && sdCardControllerListeners.size() > 0) {
+            for (final SDCardControllerListener sdCardControllerListener : sdCardControllerListeners) {
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        sdCardControllerListener.onParseProgress();
+                    }
+                });
+            }
+        }
+    }
+
+    private void notifyOnParseFinish() {
+        if (sdCardControllerListeners != null && sdCardControllerListeners.size() > 0) {
+            for (final SDCardControllerListener sdCardControllerListener : sdCardControllerListeners) {
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        sdCardControllerListener.onParseFinish();
+                    }
+                });
+            }
+        }
     }
 
 }
