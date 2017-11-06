@@ -29,12 +29,13 @@
             android:layout_margin="10dp"
             android:text="STOP READING SD CARD FILES"/>
 
-        <View
-            android:layout_width="match_parent"
-            android:layout_height="1dp"
-            android:background="@android:color/black"/>
-
     </LinearLayout>
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_below="@id/button_layout"
+        android:background="@android:color/black"/>
 
     <include
         layout="@layout/progress_layout"

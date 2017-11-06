@@ -7,7 +7,7 @@ package android.santosh.com.filecodechallenge.listerners;
 public interface SDCardControllerListener {
     void onParseStart();
 
-    void onParseProgress();
+    void onParseProgress(String message);
 
     void onParseStop();
 

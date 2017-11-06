@@ -18,8 +18,12 @@ public class AppApplication extends Application {
     public void onCreate() {
         super.onCreate();
         DatabaseController databaseController = new DatabaseController(getApplicationContext());
-        SDCardController SDCardController = new SDCardController(getApplicationContext(), new Handler(), databaseController);
-        appAPI = new AppAPI(SDCardController, databaseController);
+        NotificationHandler notificationHandler = new NotificationHandler(getApplicationContext());
+        SDCardController SDCardController = new SDCardController(getApplicationContext(),
+                                                                    new Handler(),
+                                                                    databaseController,
+                                                                    notificationHandler);
+        appAPI = new AppAPI(SDCardController, databaseController, notificationHandler);
     }
 
     public AppAPI getAppAPI() {

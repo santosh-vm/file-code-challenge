@@ -2,6 +2,7 @@ package android.santosh.com.filecodechallenge.controllers;
 
 import android.content.Context;
 import android.os.Handler;
+import android.santosh.com.filecodechallenge.NotificationHandler;
 import android.santosh.com.filecodechallenge.listerners.SDCardControllerListener;
 import android.santosh.com.filecodechallenge.model.FileExtensionVO;
 import android.util.Log;
@@ -28,11 +29,15 @@ public class SDCardController {
     private boolean isThreadActive = false;
     private List<SDCardControllerListener> sdCardControllerListeners = Collections.synchronizedList(new ArrayList<SDCardControllerListener>());
     private DatabaseController databaseController;
+    private NotificationHandler notificationHandler;
 
-    public SDCardController(Context context, Handler handler, DatabaseController databaseController) {
+    public SDCardController(Context context, Handler handler,
+                            DatabaseController databaseController,
+                            NotificationHandler notificationHandler) {
         this.context = context;
         this.handler = handler;
         this.databaseController = databaseController;
+        this.notificationHandler = notificationHandler;
     }
 
     public void beginDirectoryParsing(final File rootFolder) {
@@ -43,8 +48,12 @@ public class SDCardController {
                     notifyOnParseStart();
                     databaseController.resetFileListTable();
                     databaseController.resetFileExtensionListTable();
+                    notificationHandler.showProgressNotificaiton();
                     isThreadActive = true;
                     parseDirectory(rootFolder);
+                    isThreadActive = false;
+                    notificationHandler.dismissNotificaiton();
+                    notificationHandler.showCompleteNotification();
                     notifyOnParseFinish();
                 } catch (InterruptedException e) {
                     Log.e(TAG, "InterruptedException block: " + e.getMessage());
@@ -80,9 +89,12 @@ public class SDCardController {
                         //Log.d(TAG, "THREAD INTERRUPT, Thread.currentThread().getID(): " + Thread.currentThread().getId());
                         Thread.currentThread().interrupt();
                         thread = null;
+                        notificationHandler.dismissNotificaiton();
+                        notificationHandler.showCompleteNotification();
                         return;
                     }
                     //File name and File size in bytes.
+                    notifyOnParseProgress(listFile[i].getName());
                     double fileSizeinMB = listFile[i].length() / MEGABYTE;
                     //Log.d(TAG,"fileSizeinMB:: "+String.format("%.4f", fileSizeinMB));
                     boolean isFileInsertSuccess = databaseController.saveFileDetails(listFile[i].getName(), listFile[i].length());
@@ -150,13 +162,13 @@ public class SDCardController {
         }
     }
 
-    private void notifyOnParseProgress() {
+    private void notifyOnParseProgress(final String message) {
         if (sdCardControllerListeners != null && sdCardControllerListeners.size() > 0) {
             for (final SDCardControllerListener sdCardControllerListener : sdCardControllerListeners) {
                 handler.post(new Runnable() {
                     @Override
                     public void run() {
-                        sdCardControllerListener.onParseProgress();
+                        sdCardControllerListener.onParseProgress(message);
                     }
                 });
             }

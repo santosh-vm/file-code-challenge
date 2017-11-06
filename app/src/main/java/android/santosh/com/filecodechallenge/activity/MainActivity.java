@@ -29,6 +29,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
     private Button startButton;
     private Button stopButton;
     private View progressViewRoot;
+    private TextView progressMessageTextView;
     private View detailsRootView;
     private TextView averageFileSizeTextView;
 
@@ -50,6 +51,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
         stopButton = findViewById(R.id.stop_button);
 
         progressViewRoot = findViewById(R.id.progress_view_root_layout);
+        progressMessageTextView = findViewById(R.id.progress_message);
 
         detailsRootView = findViewById(R.id.details_root_layout);
         averageFileSizeTextView = findViewById(R.id.average_file_size_textview);
@@ -94,7 +96,6 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
     @Override
     public void onBackPressed() {
         super.onBackPressed();
-        Log.d(TAG, "onBackPressed");
         if (appAPI.getSDCardController().isThreadActive()) {
             appAPI.getSDCardController().stopDirectoryParsing();
         }
@@ -125,7 +126,6 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
 
                 break;
             case R.id.stop_button:
-                Log.d(TAG, "stop button pressed.");
                 appAPI.getSDCardController().stopDirectoryParsing();
                 break;
             default:
@@ -173,8 +173,8 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
     }
 
     @Override
-    public void onParseProgress() {
-
+    public void onParseProgress(String message) {
+        progressMessageTextView.setText(String.format(Locale.US, "%s", message));
     }
 
     @Override
@@ -217,23 +217,23 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
     private void buildDetails() {
         List<FileNameVO> fileNameVOList = appAPI.getDatabaseController().getTopSizeFilesByCount(10);
         topFileSizeLinearLayout.removeAllViews();
-        for(FileNameVO fileNameVO : fileNameVOList){
+        for (FileNameVO fileNameVO : fileNameVOList) {
             View child = getLayoutInflater().inflate(R.layout.linear_layout_list_item, null);
             TextView titleText = child.findViewById(R.id.title_text);
             TextView detailsTextView = child.findViewById(R.id.details_text);
             titleText.setText(fileNameVO.getFileName());
-            double fileSizeInMB = fileNameVO.getFileSize()/(1024D * 1024D);
-            detailsTextView.setText(String.format(Locale.US,"%.2f MB",fileSizeInMB));
+            double fileSizeInMB = fileNameVO.getFileSize() / (1024D * 1024D);
+            detailsTextView.setText(String.format(Locale.US, "%.2f MB", fileSizeInMB));
             topFileSizeLinearLayout.addView(child);
         }
         List<FileExtensionVO> fileExtensionVOList = appAPI.getDatabaseController().getTopFileExtensionsByCount(5);
         frequentFileExtensionLinearLayout.removeAllViews();
-        for(FileExtensionVO fileExtensionVO: fileExtensionVOList){
+        for (FileExtensionVO fileExtensionVO : fileExtensionVOList) {
             View child = getLayoutInflater().inflate(R.layout.linear_layout_list_item, null);
             TextView titleText = child.findViewById(R.id.title_text);
             TextView detailsTextView = child.findViewById(R.id.details_text);
             titleText.setText(fileExtensionVO.getFileExtenion());
-            detailsTextView.setText(String.format(Locale.US,"%d",fileExtensionVO.getCount()));
+            detailsTextView.setText(String.format(Locale.US, "%d", fileExtensionVO.getCount()));
             frequentFileExtensionLinearLayout.addView(child);
         }
     }

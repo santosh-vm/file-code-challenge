@@ -10,10 +10,14 @@ import android.santosh.com.filecodechallenge.controllers.SDCardController;
 public class AppAPI {
     private SDCardController SDCardController;
     private DatabaseController databaseController;
+    private NotificationHandler notificationHandler;
 
-    AppAPI(SDCardController SDCardController, DatabaseController databaseController){
+    AppAPI(SDCardController SDCardController,
+            DatabaseController databaseController,
+            NotificationHandler notificationHandler){
         this.SDCardController = SDCardController;
         this.databaseController = databaseController;
+        this.notificationHandler = notificationHandler;
     }
 
     public SDCardController getSDCardController() {
@@ -22,5 +26,9 @@ public class AppAPI {
 
     public DatabaseController getDatabaseController() {
         return databaseController;
+    }
+
+    public NotificationHandler getNotificationHandler() {
+        return notificationHandler;
     }
 }
