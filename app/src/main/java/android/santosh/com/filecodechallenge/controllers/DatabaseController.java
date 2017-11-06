@@ -8,8 +8,13 @@ import android.database.sqlite.SQLiteDatabase;
 import android.santosh.com.filecodechallenge.database.DatabaseHelper;
 import android.santosh.com.filecodechallenge.database.DatabaseLender;
 import android.santosh.com.filecodechallenge.model.FileExtensionVO;
+import android.santosh.com.filecodechallenge.model.FileNameVO;
 import android.santosh.com.filecodechallenge.util.GeneralUtil;
 import android.util.Log;
+
+import java.util.ArrayList;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Created by Santosh on 11/5/17.
@@ -145,6 +150,86 @@ public class DatabaseController {
         return fileExtensionVO;
     }
 
+    public List<FileNameVO> getTopSizeFilesByCount(int count){
+        List<FileNameVO> fileNameVOList = new ArrayList<>();
+
+        final SQLiteDatabase db = databaseLender.openDatabase();
+        Cursor cursor = null;
+        if (db == null) {
+            databaseLender.closeDatabase();
+            Log.e(TAG, "whoa, getTopSizeFilesByCount(), db == null SQLiteDatabase == null!");
+            return fileNameVOList;
+        }
+        try {
+            cursor = db.query(DatabaseHelper.TABLE_NAME_FILE_LIST,
+                    DatabaseHelper.FILE_LIST_FIELDS,
+                    null,
+                    null,
+                    null,
+                    null,
+                    DatabaseHelper.COLUMN_FILE_SIZE + " DESC",
+                    " "+count);
+
+            if (cursor == null || cursor.isAfterLast()) {
+                return fileNameVOList;
+            }
+            if (cursor.moveToFirst()) {
+                while (!cursor.isAfterLast()) {
+                    FileNameVO fileNameVO = DatabaseHelper.getFileSizeFromCursor(cursor);
+                    fileNameVOList.add(fileNameVO);
+                    cursor.moveToNext();
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "getTopSizeFilesByCount(), Exception:" + e);
+        } finally {
+            GeneralUtil.closeClosable(cursor);
+            databaseLender.closeDatabase();
+        }
+
+        return fileNameVOList;
+    }
+
+    public List<FileExtensionVO> getTopFileExtensionsByCount(int count){
+        List<FileExtensionVO> fileExtensionVOList = new LinkedList<>();
+
+        final SQLiteDatabase db = databaseLender.openDatabase();
+        Cursor cursor = null;
+        if (db == null) {
+            databaseLender.closeDatabase();
+            Log.e(TAG, "whoa, getTopSizeFilesByCount(), db == null SQLiteDatabase == null!");
+            return fileExtensionVOList;
+        }
+        try {
+            cursor = db.query(DatabaseHelper.TABLE_NAME_FILE_EXTENSION_LIST,
+                    DatabaseHelper.FILE_EXTENSION_LIST_FIELDS,
+                    null,
+                    null,
+                    null,
+                    null,
+                    DatabaseHelper.COLUMN_FILE_EXTENSION_COUNT + " DESC",
+                    " "+count);
+
+            if (cursor == null || cursor.isAfterLast()) {
+                return fileExtensionVOList;
+            }
+            if (cursor.moveToFirst()) {
+                while (!cursor.isAfterLast()) {
+                    FileExtensionVO fileExtensionVO = DatabaseHelper.getFileExtensionFromCursor(cursor);
+                    fileExtensionVOList.add(fileExtensionVO);
+                    cursor.moveToNext();
+                }
+            }
+        } catch (Exception e) {
+            Log.e(TAG, "getTopSizeFilesByCount(), Exception:" + e);
+        } finally {
+            GeneralUtil.closeClosable(cursor);
+            databaseLender.closeDatabase();
+        }
+
+        return fileExtensionVOList;
+    }
+
     public long getFileListRecordCount() {
         long recordCount = 0;
         final SQLiteDatabase db = databaseLender.openDatabase();
@@ -161,7 +246,6 @@ public class DatabaseController {
             databaseLender.closeDatabase();
         }
 
-        Log.d(TAG, "getFileListRecordCount(), recordCount: " + recordCount);
         return recordCount;
     }
 
@@ -181,7 +265,6 @@ public class DatabaseController {
             databaseLender.closeDatabase();
         }
 
-        Log.d(TAG, "getFileExtensionListRecordCount(), recordCount: " + recordCount);
         return recordCount;
     }
 
@@ -220,7 +303,6 @@ public class DatabaseController {
             GeneralUtil.closeClosable(cursor);
             databaseLender.closeDatabase();
         }
-        Log.d(TAG, "getTotalFilesSize(), totalFileSize:" + totaleFileSize);
         return totaleFileSize;
     }
 

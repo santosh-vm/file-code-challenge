@@ -6,6 +6,7 @@ import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 import android.santosh.com.filecodechallenge.model.FileExtensionVO;
+import android.santosh.com.filecodechallenge.model.FileNameVO;
 import android.util.Log;
 
 /**
@@ -113,6 +114,13 @@ public class DatabaseHelper extends SQLiteOpenHelper {
         values.put(COLUMN_FILE_EXTENSION, fileExtension);
         values.put(COLUMN_FILE_EXTENSION_COUNT, count);
         return values;
+    }
+
+    public static FileNameVO getFileSizeFromCursor(final Cursor cursor) {
+        FileNameVO fileNameVO = new FileNameVO();
+        fileNameVO.setFileName(cursor.getString(cursor.getColumnIndex(COLUMN_FILE_NAME)));
+        fileNameVO.setFileSize(cursor.getLong(cursor.getColumnIndex(COLUMN_FILE_SIZE)));
+        return fileNameVO;
     }
 
     public static FileExtensionVO getFileExtensionFromCursor(final Cursor cursor) {

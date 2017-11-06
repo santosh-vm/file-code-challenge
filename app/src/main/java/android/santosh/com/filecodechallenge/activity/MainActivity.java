@@ -6,6 +6,8 @@ import android.os.Build;
 import android.os.Environment;
 import android.santosh.com.filecodechallenge.R;
 import android.santosh.com.filecodechallenge.listerners.SDCardControllerListener;
+import android.santosh.com.filecodechallenge.model.FileExtensionVO;
+import android.santosh.com.filecodechallenge.model.FileNameVO;
 import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
@@ -13,9 +15,11 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import java.util.List;
 import java.util.Locale;
 
 public class MainActivity extends BaseActivity implements View.OnClickListener, SDCardControllerListener {
@@ -27,6 +31,9 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
     private View progressViewRoot;
     private View detailsRootView;
     private TextView averageFileSizeTextView;
+
+    private LinearLayout topFileSizeLinearLayout;
+    private LinearLayout frequentFileExtensionLinearLayout;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -46,6 +53,8 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
 
         detailsRootView = findViewById(R.id.details_root_layout);
         averageFileSizeTextView = findViewById(R.id.average_file_size_textview);
+        topFileSizeLinearLayout = findViewById(R.id.get_top_file_list);
+        frequentFileExtensionLinearLayout = findViewById(R.id.get_top_file_extension_list);
     }
 
     private void toggleViews() {
@@ -63,6 +72,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
                 appAPI.getDatabaseController().getTotalFilesSize();
                 detailsRootView.setVisibility(View.VISIBLE);
                 setAverageTextView();
+                buildDetails();
             } else {
                 detailsRootView.setVisibility(View.GONE);
             }
@@ -84,7 +94,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
     @Override
     public void onBackPressed() {
         super.onBackPressed();
-        Log.d(TAG,"onBackPressed");
+        Log.d(TAG, "onBackPressed");
         if (appAPI.getSDCardController().isThreadActive()) {
             appAPI.getSDCardController().stopDirectoryParsing();
         }
@@ -176,6 +186,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
                 && appAPI.getDatabaseController().getFileExtensionListRecordCount() > 0) {
             detailsRootView.setVisibility(View.VISIBLE);
             setAverageTextView();
+            buildDetails();
         } else {
             detailsRootView.setVisibility(View.GONE);
         }
@@ -190,6 +201,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
                 && appAPI.getDatabaseController().getFileExtensionListRecordCount() > 0) {
             detailsRootView.setVisibility(View.VISIBLE);
             setAverageTextView();
+            buildDetails();
         } else {
             detailsRootView.setVisibility(View.GONE);
         }
@@ -200,5 +212,29 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
         long fileCount = appAPI.getDatabaseController().getFileListRecordCount();
         double averageFileSize = (totalFileSize / fileCount) / (1024D * 1024D);
         averageFileSizeTextView.setText(String.format(Locale.US, "%.2f MB", averageFileSize));
+    }
+
+    private void buildDetails() {
+        List<FileNameVO> fileNameVOList = appAPI.getDatabaseController().getTopSizeFilesByCount(10);
+        topFileSizeLinearLayout.removeAllViews();
+        for(FileNameVO fileNameVO : fileNameVOList){
+            View child = getLayoutInflater().inflate(R.layout.linear_layout_list_item, null);
+            TextView titleText = child.findViewById(R.id.title_text);
+            TextView detailsTextView = child.findViewById(R.id.details_text);
+            titleText.setText(fileNameVO.getFileName());
+            double fileSizeInMB = fileNameVO.getFileSize()/(1024D * 1024D);
+            detailsTextView.setText(String.format(Locale.US,"%.2f MB",fileSizeInMB));
+            topFileSizeLinearLayout.addView(child);
+        }
+        List<FileExtensionVO> fileExtensionVOList = appAPI.getDatabaseController().getTopFileExtensionsByCount(5);
+        frequentFileExtensionLinearLayout.removeAllViews();
+        for(FileExtensionVO fileExtensionVO: fileExtensionVOList){
+            View child = getLayoutInflater().inflate(R.layout.linear_layout_list_item, null);
+            TextView titleText = child.findViewById(R.id.title_text);
+            TextView detailsTextView = child.findViewById(R.id.details_text);
+            titleText.setText(fileExtensionVO.getFileExtenion());
+            detailsTextView.setText(String.format(Locale.US,"%d",fileExtensionVO.getCount()));
+            frequentFileExtensionLinearLayout.addView(child);
+        }
     }
 }

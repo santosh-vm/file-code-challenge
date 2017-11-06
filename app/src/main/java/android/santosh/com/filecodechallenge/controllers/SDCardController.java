@@ -30,7 +30,6 @@ public class SDCardController {
     private DatabaseController databaseController;
 
     public SDCardController(Context context, Handler handler, DatabaseController databaseController) {
-        Log.d(TAG, "SDCardController Initialized");
         this.context = context;
         this.handler = handler;
         this.databaseController = databaseController;
@@ -85,10 +84,8 @@ public class SDCardController {
                     }
                     //File name and File size in bytes.
                     double fileSizeinMB = listFile[i].length() / MEGABYTE;
-                    Log.d(TAG, "listfile name:" + listFile[i].getName() + ", listFile[i].length(): " + listFile[i].length());
                     //Log.d(TAG,"fileSizeinMB:: "+String.format("%.4f", fileSizeinMB));
                     boolean isFileInsertSuccess = databaseController.saveFileDetails(listFile[i].getName(), listFile[i].length());
-                    Log.d(TAG,"isFileInsertSuccess: "+isFileInsertSuccess);
 
                     Pattern pattern = Pattern.compile("(.*)(\\.)(.*)");
                     Matcher matcher = pattern.matcher(listFile[i].getName());
@@ -105,9 +102,7 @@ public class SDCardController {
                                 }else{
                                     fileExtensionCount  = 1;
                                 }
-                                Log.d(TAG,"Inserting fileExtension, fileExtension:"+fileExtension+", fileExtensionCount: "+fileExtensionCount);
                                 boolean isFileExtensionInsertSuccess = databaseController.saveFileExtensionDetails(fileExtension,fileExtensionCount);
-                                Log.d(TAG,"isFileExtensionInsertSuccess: "+isFileExtensionInsertSuccess);
                             }
                         }
                     }
