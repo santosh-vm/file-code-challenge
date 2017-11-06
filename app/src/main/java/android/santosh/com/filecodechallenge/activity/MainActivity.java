@@ -1,6 +1,7 @@
 package android.santosh.com.filecodechallenge.activity;
 
 import android.Manifest;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.os.Build;
 import android.os.Environment;
@@ -12,7 +13,11 @@ import android.support.annotation.NonNull;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.os.Bundle;
+import android.support.v4.view.MenuItemCompat;
+import android.support.v7.widget.ShareActionProvider;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.LinearLayout;
@@ -60,6 +65,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
     }
 
     private void toggleViews() {
+        invalidateOptionsMenu();
         if (appAPI.getSDCardController().isThreadActive()) {
             startButton.setEnabled(false);
             stopButton.setEnabled(true);
@@ -99,6 +105,38 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
         if (appAPI.getSDCardController().isThreadActive()) {
             appAPI.getSDCardController().stopDirectoryParsing();
         }
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_main_activity, menu);
+        MenuItem item = menu.findItem(R.id.menu_item_share);
+        ShareActionProvider shareActionProvider = new ShareActionProvider(this);
+        MenuItemCompat.setActionProvider(item, shareActionProvider);
+        shareActionProvider.setShareIntent(createShareIntent());
+        if (appAPI.getDatabaseController().getFileListRecordCount() > 0
+                && appAPI.getDatabaseController().getFileExtensionListRecordCount() > 0) {
+            item.setVisible(true);
+        } else {
+            item.setVisible(false);
+        }
+        return true;
+    }
+
+    private Intent createShareIntent() {
+        Intent intent = new Intent(android.content.Intent.ACTION_SEND);
+        intent.setType("text/plain");
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_WHEN_TASK_RESET);
+
+        long totalFileSize = appAPI.getDatabaseController().getTotalFilesSize();
+        long fileCount = appAPI.getDatabaseController().getFileListRecordCount();
+        double averageFileSize = (totalFileSize / fileCount) / (1024D * 1024D);
+
+        // Add data to the intent, the receiving app will decide what to do with it.
+        intent.putExtra(Intent.EXTRA_SUBJECT, "File Statistics");
+        //We can send whatever data we want here. For now I'm sharing only average file size.
+        intent.putExtra(Intent.EXTRA_TEXT, String.format(Locale.US, "Average File size: %.2f MB", averageFileSize));
+        return intent;
     }
 
     @Override
@@ -166,6 +204,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
 
     @Override
     public void onParseStart() {
+        invalidateOptionsMenu();
         startButton.setEnabled(false);
         stopButton.setEnabled(true);
         progressViewRoot.setVisibility(View.VISIBLE);
@@ -179,6 +218,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
 
     @Override
     public void onParseStop() {
+        invalidateOptionsMenu();
         startButton.setEnabled(true);
         stopButton.setEnabled(false);
         progressViewRoot.setVisibility(View.GONE);
@@ -194,6 +234,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
 
     @Override
     public void onParseFinish() {
+        invalidateOptionsMenu();
         startButton.setEnabled(true);
         stopButton.setEnabled(false);
         progressViewRoot.setVisibility(View.GONE);
