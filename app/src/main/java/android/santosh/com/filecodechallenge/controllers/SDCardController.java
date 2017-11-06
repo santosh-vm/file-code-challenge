@@ -105,7 +105,6 @@ public class SDCardController {
                         int groupCount = matcher.groupCount();
                         for (int j = 1; j <= groupCount; j++) {
                             if (j == groupCount) {
-                                //Log.d(TAG, "group: " + i + ", text: " + matcher.group(j));
                                 String fileExtension = matcher.group(j).toLowerCase();
                                 int fileExtensionCount = 0;
                                 FileExtensionVO fileExtensionVO = databaseController.getFileExtensionVOByFileExtension(fileExtension);

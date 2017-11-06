@@ -130,7 +130,11 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
 
         long totalFileSize = appAPI.getDatabaseController().getTotalFilesSize();
         long fileCount = appAPI.getDatabaseController().getFileListRecordCount();
-        double averageFileSize = (totalFileSize / fileCount) / (1024D * 1024D);
+
+        double averageFileSize = 0D;
+        if(totalFileSize>0 && fileCount>0) {
+            averageFileSize = (totalFileSize / fileCount) / (1024D * 1024D);
+        }
 
         // Add data to the intent, the receiving app will decide what to do with it.
         intent.putExtra(Intent.EXTRA_SUBJECT, "File Statistics");
