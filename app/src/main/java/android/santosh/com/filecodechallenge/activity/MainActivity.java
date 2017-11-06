@@ -114,8 +114,8 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
         ShareActionProvider shareActionProvider = new ShareActionProvider(this);
         MenuItemCompat.setActionProvider(item, shareActionProvider);
         shareActionProvider.setShareIntent(createShareIntent());
-        if (appAPI.getDatabaseController().getFileListRecordCount() > 0
-                && appAPI.getDatabaseController().getFileExtensionListRecordCount() > 0) {
+        if (!appAPI.getSDCardController().isThreadActive() && (appAPI.getDatabaseController().getFileListRecordCount() > 0
+                && appAPI.getDatabaseController().getFileExtensionListRecordCount() > 0)) {
             item.setVisible(true);
         } else {
             item.setVisible(false);
@@ -132,7 +132,7 @@ public class MainActivity extends BaseActivity implements View.OnClickListener, 
         long fileCount = appAPI.getDatabaseController().getFileListRecordCount();
 
         double averageFileSize = 0D;
-        if(totalFileSize>0 && fileCount>0) {
+        if (totalFileSize > 0 && fileCount > 0) {
             averageFileSize = (totalFileSize / fileCount) / (1024D * 1024D);
         }
 

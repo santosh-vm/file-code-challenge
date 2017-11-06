@@ -69,6 +69,7 @@
                 android:layout_marginTop="10dp"
                 android:gravity="center"
                 android:text="5 most frequent file extensions (with their frequencies)"
+                android:textColor="#088A08"
                 android:textSize="14sp"
                 android:textStyle="bold"/>
 
